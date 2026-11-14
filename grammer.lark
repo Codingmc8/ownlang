@@ -1,4 +1,3 @@
-
 start: unit*
 
 unit: args
@@ -69,6 +68,7 @@ NULL: "null"
      | CNAME -> var
      | CNAME "[" expr "]" -> arr_index
      | CNAME "." CNAME -> obj_access
+     | CNAME "(" [expr ("," expr)*] ")" -> func_call
      | STRING -> string
      | BOOLEAN -> boolean
      | "(" expr ")"
@@ -79,7 +79,7 @@ NULL: "null"
 echo_stmt: "echo" expr ("," expr)*
 if_stmt: "if" expr block
 for_stmt: "for" expr block
-func_stmt: "func" CNAME "(" param ")" block
+func_stmt: "func" CNAME "(" param ")" block -> reg_func
 return_stmt: "return" expr
 break_stmt: "break"
 continue_stmt: "continue"

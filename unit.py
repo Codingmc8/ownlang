@@ -33,6 +33,14 @@ class DictObject:
         items = [f"{repr(k)}: {repr(v)}" for k, v in self.elements]
         return f"{{{', '.join(items)}}}"
 
+class FunctionObject:
+    def __init__(self, name, param, block, closure):
+        self.name = name
+        self.param = param
+        self.block = block
+        self.closure = closure
+    def __repr__(self): return f"<function {self.name}({', '.join(self.param)})>"
+
 class Environment(Interpreter):
     def __init__(self, source_dir):
         super().__init__()
@@ -229,12 +237,54 @@ class Environment(Interpreter):
             tree = parser.parse(source)
             self.visit(tree)
 
+    def reg_func(self, tree):
+        name = str(tree.children[0])
+        param = tree.children[1]
+        body = tree.children[2]
+
+        params = []
+        if param and hasattr(param, 'children'):
+            node = param.children if hasattr(param, 'children') else [param]
+            for i in node:
+                if hasattr(i, 'children') and i.children:
+                    params.append(str(i.children[0]))
+                else:
+                    params.append(str(i))
+
+        func_obj = FunctionObject(name, param, body, self)
+        self.env[name] = func_obj
+        return func_obj
+
+    def search_func(self, name):
+        if name not in self.env: raise NameError(f"Function {name} not found!")
+        obj = self.env[name]
+        if not isinstance(obj, FunctionObject): raise TypeError(f"Variable {name} isn't regular function!")
+        return obj
+
+    def func_call(self, tree):
+        name = str(tree.children[0])
+        obj = self.search_func(name)
+
+        exprs = tree.children[1:] if len(tree.children) > 1 else []
+        values = [self.visit(args) for args in exprs]
+
+        if len(values) != len(obj.param):
+            raise TypeError(f"Function '{name}' expects {len(obj.param)} arguments, got {len(values)}!")
+
+        local_env = Environment(self.source_dir)
+        local_env.env = dict(obj.closure)
+
+        for param_name, val in zip(obj.param, values):
+            local_env.env[param_name] = val
+
+        result = None
+        try:
+            local_env.visit(obj.block)
+        except ReturnSignal as e:
+            result = e.value
+
+        return result
 parser = Lark(
     GRAMMAR.read_text(),
     parser='lalr'
 )
-
-# tree = parser.parse()
-
-# env = Environment(".")
-# print(env.visit(tree))
