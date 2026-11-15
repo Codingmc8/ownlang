@@ -1,6 +1,37 @@
 # Own 1.0.0 : Early Software
 made by `Codingmc8` using `Python3` + `Lark`
 
+## Setup
+
+### Requirement
+* `lark`
+* `Python3.8+`
+
+### installing dependencies
+```bash
+pip install lark
+```
+or
+```bash
+pip install -r requirements.txt
+```
+
+### How to use ?
+1. **Single file**
+```bash
+own myfile.own
+```
+
+2. **Multi files**
+```bash
+own -mf myfile.own main.own
+```
+
+3. **CLI access** : say hi to `@1`
+```bash
+own myfile.own alex
+```
+
 ## Update 1.0.0
 ``` txt
 - added 13 keyword
@@ -105,6 +136,12 @@ import mylibrary
 /* this is multi-comment */
 ```
 
+### Expression symbols
+* **Arithmetic**: `+`, `-`, `*`, `/`, `^` (exponentiation)
+* **Assignment**: `=`, `+=`, `-=`, `*=`, `/=`, `^=`
+* **Comparison**: `==`, `!=`, `<`, `>`, `<=`, `>=`
+* **Logical**: `&&` (AND), `||` (OR), `!` (NOT)
+
 ## Support
 - `int`, `string`, `boolean`, `null` data type
 - `.own` extension
@@ -114,3 +151,7 @@ import mylibrary
 ## Notes
 * this language use `0-based-indexing`
 * not support `float` data type
+
+## Next Update
+* [ ] String interpolation (`${variable}`)
+* [ ] Expanded built-in standard library
