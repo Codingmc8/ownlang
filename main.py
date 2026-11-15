@@ -63,6 +63,12 @@ class FunctionObject:
 
     def __repr__(self): return f"<function {self.name}({', '.join(self.param)})>"
 
+class PythonObject:
+    def __init__(self, name, func):
+        self.name = name
+        self.func = func
+    def __repr__(self): return f"<python-function {self.name}>"
+
 class Environment(Interpreter):
     def __init__(self, source_dir, cli_args=None):
         super().__init__()
@@ -118,24 +124,22 @@ class Environment(Interpreter):
     def add_equal(self, tree): return self._compound(tree, lambda a, b: a + b)
     def min_equal(self, tree): return self._compound(tree, lambda a, b: a - b)
     def mul_equal(self, tree): return self._compound(tree, lambda a, b: a * b)
-
     def div_equal(self, tree): return self._compound(tree, lambda a, b: a / b)
     def domain_equal(self, tree): return self._compound(tree, lambda a, b: a ** b)
+    
     def add(self, tree): return self.visit(tree.children[0]) + self.visit(tree.children[1])
-
     def sub(self, tree): return self.visit(tree.children[0]) - self.visit(tree.children[1])
     def mul(self, tree): return self.visit(tree.children[0]) * self.visit(tree.children[1])
     def div(self, tree): return self.visit(tree.children[0]) / self.visit(tree.children[1])
-
     def domain(self, tree): return self.visit(tree.children[0]) ** self.visit(tree.children[1])
+    
     def d_equal(self, tree): return self.visit(tree.children[0]) == self.visit(tree.children[1])
     def n_equal(self, tree): return self.visit(tree.children[0]) != self.visit(tree.children[1])
-
     def less_than(self, tree): return self.visit(tree.children[0]) < self.visit(tree.children[1])
     def greater_than(self, tree): return self.visit(tree.children[0]) > self.visit(tree.children[1])
     def lt_equal(self, tree): return self.visit(tree.children[0]) <= self.visit(tree.children[1])
-
     def gt_equal(self, tree): return self.visit(tree.children[0]) >= self.visit(tree.children[1])
+    
     def and_logic(self, tree): return bool(self.visit(tree.children[0])) and bool(self.visit(tree.children[1]))
     def or_logic(self, tree): return bool(self.visit(tree.children[0])) or bool(self.visit(tree.children[1]))
     def not_logic(self, tree): return not self.visit(tree.children[0])
@@ -165,10 +169,8 @@ class Environment(Interpreter):
     def arr_index(self, tree):
         name = str(tree.children[0])
         index = tree.children[1]
-
         array_index = self.visit(index)
         obj = self.search(name)
-
         if not isinstance(obj, ArrayObject): raise TypeError(f"Variable '{name}' isn't regular array!")
         return obj[array_index]
 
@@ -182,7 +184,6 @@ class Environment(Interpreter):
         name = str(tree.children[0])
         prop_name = str(tree.children[1])
         obj = self.search(name)
-
         if not isinstance(obj, DictObject): raise TypeError(f"Variable '{name}' isn't regular object!")
         return obj.get(prop_name)
 
@@ -190,10 +191,8 @@ class Environment(Interpreter):
         name = str(tree.children[0])
         prop_name = str(tree.children[1])
         expr = tree.children[2]
-
         obj = self.search(name)
         if not isinstance(obj, DictObject): raise TypeError(f"Variable '{name}' isn't regular object!")
-
         val = self.visit(expr)
         return obj.set(prop_name, val)
 
@@ -201,7 +200,6 @@ class Environment(Interpreter):
     def arg_base_index(self, tree):
         index = int(tree.children[1])
         arr = self.search("@")
-
         if not isinstance(arr, ArrayObject): raise TypeError("Symbol '@' isn't a valid array!")
         return arr[index]
 
@@ -237,12 +235,10 @@ class Environment(Interpreter):
     def for_stmt(self, tree):
         condition, body = tree.children
         result = None
-
         while self.visit(condition):
             try: result = self.visit(body)
             except ContinueSignal: continue
             except BreakSignal: break
-
         return result
 
     def break_stmt(self, tree): raise BreakSignal()
@@ -251,21 +247,44 @@ class Environment(Interpreter):
     def import_stmt(self, tree):
         package = ".".join(map(str, tree.children[0].children))
         if package in self.packages:
-            raise ImportError(f"Package {package} has already imported!")
+            return
 
-        pkg_dir = self.source_dir.joinpath(*package.split("."))
+        lib_dir = self.source_dir / "lib"
+        if not lib_dir.exists():
+            lib_dir = Path("lib").resolve()
+
+        py_lib_file = lib_dir / f"{package.replace('.', '/')}.py"
+        if py_lib_file.is_file():
+            import importlib.util
+            import sys
+
+            spec = importlib.util.spec_from_file_location(f"lib.{package}", py_lib_file)
+            py_mod = importlib.util.module_from_spec(spec)
+            
+            sys.modules[f"lib.{package}"] = py_mod
+            spec.loader.exec_module(py_mod)
+            self.packages.add(package)
+
+            for attribute in dir(py_mod):
+                attr_value = getattr(py_mod, attribute)
+                if callable(attr_value) and getattr(attr_value, "__module__", None) == py_mod.__name__:
+                    self.env[attribute] = PythonObject(attribute, attr_value)
+            return
+
+        pkg_dir = lib_dir.joinpath(*package.split("."))
         if not pkg_dir.is_dir():
-            raise ModuleNotFoundError(f"Package '{package}' not found!")
+            pkg_dir = self.source_dir.joinpath(*package.split("."))
+            if not pkg_dir.is_dir():
+                raise ModuleNotFoundError(f"Package '{package}' not found!")
 
         files = sorted(pkg_dir.glob("*.own"))
-        if not files:
-            raise ImportError(f"Package '{package}' contains no source files!")
+        if not files: raise ImportError(f"Package '{package}' contains no source files!")
         self.packages.add(package)
 
         for f in files:
-            source = f.read_text(encoding="utf-8")
-            parsed_tree = parser.parse(source)
-            self.visit(parsed_tree)
+            source = f.read_text(encoding='utf-8')
+            tree = parser.parse(source)
+            self.visit(tree)
 
     def reg_func(self, tree):
         name = str(tree.children[0])
@@ -291,14 +310,22 @@ class Environment(Interpreter):
 
     def func_call(self, tree):
         name = str(tree.children[0])
+
+        if name in self.env and isinstance(self.env[name], PythonObject):
+            py_obj = self.env[name]
+            exprs = tree.children[1:] if len(tree.children) > 1 else []
+            values = [self.visit(args) for args in exprs if args is not None]
+            return py_obj.func(*values)
+
         obj = self.search_func(name)
 
         exprs = tree.children[1:] if len(tree.children) > 1 else []
-        values = [self.visit(args) for args in exprs]
+        values = [self.visit(args) for args in exprs if args is not None]
         has_rest = obj.param and obj.param[-1] == "..."
 
         local_env = Environment(self.source_dir, cli_args=[])
         local_env.env = dict(obj.closure.env)
+        local_env.packages = self.packages
 
         if has_rest:
             fixed_params_count = len(obj.param) - 1

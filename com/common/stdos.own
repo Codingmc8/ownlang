@@ -1,0 +1,3 @@
+import stdos
+
+func mkdir(name) { __mkdir__(name) }

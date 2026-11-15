@@ -5,3 +5,8 @@ Own 1.0.0 : Eary Software
     - added support for int, string, boolean and null data type
     - added array and object support
     - simple command line information
+
+Own 1.0.1 : Import system Update
+    - added import system (FFI method)
+    - now only support stdos for manage file or folder
+    - simple package system
