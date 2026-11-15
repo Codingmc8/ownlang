@@ -1,3 +1,29 @@
 import stdos
 
-func mkdir(name) { __mkdir__(name) }
+func move(old, new) { __move__(old, new) }
+func rename(old, new) { __rename__(old, new) }
+func copy(from, to) { __copy__(from, to) }
+
+func system(command) { __system__(command) }
+func mkdir(name) { __mkdir(name) }
+
+/*
+level 0 : folder
+level 1 : file
+*/
+func remove(name, level) {
+    if level == 0 { __rmdir__(name) }
+    else { __rmfile__(name) }
+}
+
+func touch(name) { __touch__(name) }
+func read(name) { __read__(name) }
+func cd(path) { __cd__(path) }
+
+func ls(path) { __ls__(path) }
+func write(path, content) { __write__(path, content) }
+func append(path, content) { __append_file__(path, content) }
+
+func pwd() { __getpwd__() }
+func home() { __gethome__() }
+func uuid() { __getuuid__() }
