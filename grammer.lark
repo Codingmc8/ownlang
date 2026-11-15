@@ -65,10 +65,10 @@ NULL: "null"
       | atom
 
 ?atom: NUMBER -> number
+     | CNAME "(" [expr ("," expr)*] ")" -> func_call
      | CNAME -> var
      | CNAME "[" expr "]" -> arr_index
      | CNAME "." CNAME -> obj_access
-     | CNAME "(" [expr ("," expr)*] ")" -> func_call
      | STRING -> string
      | BOOLEAN -> boolean
      | "(" expr ")"
@@ -77,7 +77,7 @@ NULL: "null"
      | NULL -> null_expr
 
 echo_stmt: "echo" expr ("," expr)*
-if_stmt: "if" expr block
+if_stmt: "if" expr block ("else" block)? -> if_stmt
 for_stmt: "for" expr block
 func_stmt: "func" CNAME "(" param ")" block -> reg_func
 return_stmt: "return" expr
@@ -87,7 +87,8 @@ import_stmt: "import" import_path
 expr_stmt: expr
 
 block: "{" unit* "}"
-param: [CNAME ("," CNAME)*]
+param: [CNAME ("," CNAME)* ("," "...")?] -> param_def
+     | "..." -> rest_only
 import_path: CNAME ("." CNAME)*
 
 BOOLEAN.2: "true" | "false"
@@ -96,4 +97,10 @@ STRING: /"[^"]*"/
 %import common.NUMBER
 %import common.CNAME
 %import common.WS
+
+COMMENT: /\/\/[^\n]*/
+MULTI_COMMENT: /\/\*[\s\S]*?\*\//
+
+%ignore COMMENT
+%ignore MULTI_COMMENT
 %ignore WS

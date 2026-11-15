@@ -1,150 +1,116 @@
-# Own (v1.0)
+# Own 1.0.0 : Early Software
+made by `Codingmc8` using `Python3` + `Lark`
 
-**Own** is a minimalist, ultra-lightweight (~53 KB) interpreted scripting language designed for CLI automation. Built with Python and the Lark parser, Own features a clean, straight-to-the-point syntax that is easy to read and write.
-
-## Key Features (v1.0)
-
-* **Ultra-Lightweight**: Minimalist flat architecture with zero bloatware.
-* **Native CLI Integration**: Directly access terminal arguments using the `@` symbol (`@1`, `@2`, etc.).
-* **Strict File Execution**: Exclusively executes `.own` files, supporting both single-file (default) and multi-file (`-mf`) modes.
-* **Rich Data Types**: Supports *Number*, *String*, *Boolean* (`true`, `false`), `null`, *Array*, and *Object/Dictionary*.
-* **Control Flow & Modularity**: Equipped with `if`, `for`, `break`, `continue`, `return`, and an `import` system for external `.own` files/packages.
-
-## Installation & Setup
-
-### Prerequisites
-
-* Python 3.8+
-* `lark` library
-
-```bash
-pip install lark
+## Update 1.0.0
+``` txt
+- added 13 keyword
+- added argument input using @
+- added math operators and math expression
+- added support for int, string, boolean and null data type
+- added array and object support
+- simple command line information
 ```
 
-## Running Scripts
+## Example
+### echo
+```
+echo "Hello, World"
+echo "Hello:", @1
 
-1. **Single-File Mode (Default):**
-   ```bash
-   own examples/test.own
-   ```
-
-2. **Multi-File Mode (`-mf`):**
-   Execute multiple `.own` files sequentially within the same shared environment:
-   ```bash
-   own -mf file1.own file2.own
-   ```
-
-3. **Passing CLI Arguments:**
-   ```bash
-   own examples/test.own hello world
-   ```
-
-## Syntax Documentation
-
-### 1. Output (`echo`)
-
-Prints text or variable values to the terminal. Supports multiple comma-separated expressions.
-
-```own
-echo "Hello, World!"
-echo "Result:", 10 + 20
+let x = "Hello"
+echo x, "World"
 ```
 
-### 2. Variables & Data Types (`let`)
+### let
+```
+let empty
+let number = 10
+let string = "Hello, World"
 
-Declare variables using the `let` keyword.
-
-```own
-let name = "Own"
-let version = 1.0
-let active = true
-let empty = null
+let boolean = true
+let array = [number, string, boolean]
+let object = {all: array}
 ```
 
-### 3. Arrays & Objects
-
-Supports 0-based indexing for arrays and dot notation (`.`) for accessing or modifying object properties.
-
-```own
-// Array
-let numbers = [10, 20, 30]
-echo numbers[0] // Output: 10
-
-// Object
-let user = { name: "Pypix", role: "Creator" }
-echo user.name // Output: Pypix
-user.role = "Admin"
+### for & if & else & break & continue
 ```
-
-### 4. CLI Arguments (`@`)
-
-Capture arguments passed from the terminal when executing a script.
-
-```own
-// Executed with: own test.own hello
-// @0 refers to the script name (test.own), @1 refers to the first argument
-echo "First argument:", @1
-```
-
-### 5. Math & Logical Operators
-
-* **Arithmetic**: `+`, `-`, `*`, `/`, `^` (exponentiation)
-* **Assignment**: `=`, `+=`, `-=`, `*=`, `/=`, `^=`
-* **Comparison**: `==`, `!=`, `<`, `>`, `<=`, `>=`
-* **Logical**: `&&` (AND), `||` (OR), `!` (NOT)
-
-### 6. Conditionals (`if`)
-
-```own
-let score = 85
-
-if score >= 80 {
-    echo "Passed with distinction"
+// print out number 0-3
+let i = 0
+for i < 3 {
+    echo i
+    i += 1
 }
-```
 
-### 7. Loops (`for`, `break`, `continue`)
+// loop 0-n
+let running = true
+let i = 0
 
-Full control over loop execution using `break` to exit the loop early and `continue` to skip the current iteration.
+for running {
+    echo i
+    i += 1
+}
 
-```own
-for i in [1, 2, 3, 4, 5] {
-    if i == 2 {
+// repeat until number 10
+let running = true
+let i = 0
+
+for running {
+    echo i
+    i += 1
+
+    if i == 10 {
+        break
+    } else {
         continue
     }
-    if i == 4 {
-        break
-    }
-    echo i
 }
-// Output: 1, 3
 ```
 
-### 8. Modularity (`import` & `return`)
+### func & return
+```
+// no parameter
+func hi() {
+    echo "Hi"
+}
 
-Import external `.own` packages or modules into your active script.
+// with parameter
+func hi_param(name) {
+    echo "Hi", name
+}
 
-```own
-import math
+// with argument input
+func hi_input() {
+    echo "Hi", @1
+}
+
+// with return and parameter
+func hi_ret_param(name) {
+    return "Hi", name
+}
 ```
 
-## Roadmap (Next Update)
+### import
+```
+// import with package system
+import path.to.your.library
 
-* [ ] Custom function declarations (`func`)
-* [ ] String interpolation (`${variable}`)
-* [ ] Expanded built-in standard library
+// import without package system
+import mylibrary
+```
+
+### Comment & Multi-Comment
+```
+// this is comment
+
+/* this is multi-comment */
+```
+
+## Support
+- `int`, `string`, `boolean`, `null` data type
+- `.own` extension
+- argument input using `@` symbols
+- `array` and `object` access
 
 ## Notes
-
-Don't forget to set up a global alias or wrapper so you can run `own` directly from your terminal:
-
-**Linux / macOS (`.bashrc` or `.zshrc`):**
-```bash
-alias own="python3 /path/to/main.py"
-```
-
-**Windows (`own.bat`):**
-```bat
-@echo off
-python "C:\path\to\main.py" %*
-```
+* this language use `0-based-indexing`
+* not support `float` data type

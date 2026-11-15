@@ -1,0 +1,7 @@
+Own 1.0.0 : Eary Software
+    - added 13 keyword
+    - added argument input using @
+    - added math operators and math expression
+    - added support for int, string, boolean and null data type
+    - added array and object support
+    - simple command line information
