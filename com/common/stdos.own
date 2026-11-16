@@ -4,8 +4,8 @@ func move(old, new) { __move__(old, new) }
 func rename(old, new) { __rename__(old, new) }
 func copy(from, to) { __copy__(from, to) }
 
-func system(command) { __system__(command) }
-func mkdir(name) { __mkdir(name) }
+func system(command, ...) { __system__(command, ...) }
+func mkdir(name, ...) { __mkdir__(name, ...) }
 
 /*
 level 0 : folder
@@ -16,11 +16,11 @@ func remove(name, level) {
     else { __rmfile__(name) }
 }
 
-func touch(name) { __touch__(name) }
-func read(name) { __read__(name) }
+func touch(name, ...) { __touch__(name, ...) }
+func read(name, ...) { __read__(name, ...) }
 func cd(path) { __cd__(path) }
 
-func ls(path) { __ls__(path) }
+func ls(path, ...) { __ls__(path, ...) }
 func write(path, content) { __write__(path, content) }
 func append(path, content) { __append_file__(path, content) }
 

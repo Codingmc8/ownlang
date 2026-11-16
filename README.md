@@ -42,6 +42,13 @@ own myfile.own alex
 - simple command line information
 ```
 
+## Update 1.0.1
+```txt
+- added import system (FFI method)
+- now only support stdos for manage file or folder
+- simple package system
+```
+
 ## Example
 ### echo
 ```

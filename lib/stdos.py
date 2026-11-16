@@ -16,36 +16,43 @@ def __copy__(old_path, new_path):
     try: shutil.copy(old_path, new_path)
     except Exception as e: return f"{e}"
 
-def __system__(command):
+def __system__(*args, **kwargs):
     try:
+        full_command = " && ".join(str(arg) for arg in args)
         result = subprocess.run(
-            command,
+            full_command,
             shell=True,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            **kwargs
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError as e: return f"{e.stderr}"
     except Exception as e: return f"{e}"
 
-def __mkdir__(name): os.makedirs(name, exist_ok=True)
-def __rmdir__(name): os.removedirs(name)
+def __mkdir__(name, *args, **kwargs): 
+    try: os.makedirs(name, *args, **kwargs)
+    except Exception as e: return str(e)
 
-def __touch__(name):
-    try: Path(name).touch()
+def __rmdir__(name, *args, **kwargs): 
+    try: os.removedirs(name)
+    except Exception as e: return str(e)
+
+def __touch__(name, *args, **kwargs):
+    try: Path(name).touch(*args, **kwargs)
     except Exception as e: return f"{e}"
 
-def __rmfile__(name):
-    try: Path(name).unlink()
+def __rmfile__(name, *args, **kwargs):
+    try: Path(name).unlink(*args, **kwargs)
     except Exception as e: return f"{e}"
 
-def __read__(name):
+def __read__(name, *args, **kwargs):
     try:
         path = Path(name)
         if not path.is_file(): return f"Error: File {name} not found!"
 
-        content = path.read_text(encoding="utf-8")
+        content = path.read_text(*args, **kwargs)
         return content
     except Exception as e: return str(e)
 
@@ -56,7 +63,7 @@ def __cd__(path):
     except FileNotFoundError: return f"Error: Directory {path} not found!"
     except Exception as e: return str(e)
 
-def __ls__(path="."):
+def __ls__(path=".", *args, **kwargs):
     try:
         items = os.listdir(path)
         return items

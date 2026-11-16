@@ -2,6 +2,7 @@ from pathlib import Path
 from lark import Lark
 from lark.visitors import Interpreter
 import sys
+import inspect
 
 GRAMMAR = Path(__file__).parent / "grammer.lark"
 
