@@ -10,3 +10,9 @@ Own 1.0.1 : Import system Update
     - added import system (FFI method)
     - now only support stdos for manage file or folder
     - simple package system
+
+Own 1.0.2 : Variable manipulation
+    - added typedef syntax
+    - added ternary operators
+    - update for, func, if system
+    - removed import system
