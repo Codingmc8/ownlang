@@ -1,8 +1,8 @@
 from pathlib import Path
 from lark import Lark
 from lark.visitors import Interpreter
-import sys
-import inspect
+import sys, re, importlib.util
+import os, shutil, uuid
 
 GRAMMAR = Path(__file__).parent / "grammer.lark"
 
@@ -56,11 +56,13 @@ class DictObject:
         return f"{{{', '.join(items)}}}"
 
 class FunctionObject:
-    def __init__(self, name, param, block, closure):
+    def __init__(self, name, param, block, closure, defaults=None, is_rest=False):
         self.name = name
         self.param = param
         self.block = block
         self.closure = closure
+        self.defaults = defaults
+        self.is_rest = is_rest
 
     def __repr__(self): return f"<function {self.name}({', '.join(self.param)})>"
 
@@ -69,6 +71,15 @@ class PythonObject:
         self.name = name
         self.func = func
     def __repr__(self): return f"<python-function {self.name}>"
+
+class RangeObject:
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+        if start <= end: self.elements = list(range(start, end + 1))
+        else: self.elements = list(range(start, end - 1, -1))
+
+    def __repr__(self): return f"[{', '.join(map(str, self.elements))}]"
 
 class Environment(Interpreter):
     def __init__(self, source_dir, cli_args=None):
@@ -86,12 +97,43 @@ class Environment(Interpreter):
             result = self.visit(child)
         return result
 
+    def range_expr(self, tree):
+        one = self.visit(tree.children[0])
+        end = self.visit(tree.children[1])
+
+        if not isinstance(one, int) and not isinstance(end, int):
+            raise TypeError("range bounderies must be a int")
+        return RangeObject(one, end)
+
     def unit(self, tree): return self.visit(tree.children[0])
     def args(self, tree): return self.visit(tree.children[0])
     def expr(self, tree): return self.visit(tree.children[0])
 
     def number(self, tree): return int(tree.children[0])
-    def string(self, tree): return str(tree.children[0])[1:-1]
+
+    def string(self, tree):
+        raw = str(tree.children[0])[1:-1]
+        pattern = r'\${([^}]+)}'
+
+        def replace(match):
+            expr_str = match.group(1).strip()
+            try:
+                if expr_str in self.env: val = self.env[expr_str]
+                else:
+                    sub_tree = parser.parse(expr_str)
+                    val = self.visit(sub_tree)
+
+                if val is True: return "true"
+                elif val is False: return "false"
+                elif val is None: return "null"
+
+                return str(val)
+            except Exception as e:
+                return f"<eval-error: {expr_str}>"
+
+        arg_str = re.sub(pattern, replace, raw)
+        return arg_str
+
     def boolean(self, tree): return str(tree.children[0]) == "true"
     def var(self, tree): return self.search(str(tree.children[0]))
 
@@ -127,26 +169,37 @@ class Environment(Interpreter):
     def mul_equal(self, tree): return self._compound(tree, lambda a, b: a * b)
     def div_equal(self, tree): return self._compound(tree, lambda a, b: a / b)
     def domain_equal(self, tree): return self._compound(tree, lambda a, b: a ** b)
-    
+
     def add(self, tree): return self.visit(tree.children[0]) + self.visit(tree.children[1])
     def sub(self, tree): return self.visit(tree.children[0]) - self.visit(tree.children[1])
     def mul(self, tree): return self.visit(tree.children[0]) * self.visit(tree.children[1])
     def div(self, tree): return self.visit(tree.children[0]) / self.visit(tree.children[1])
     def domain(self, tree): return self.visit(tree.children[0]) ** self.visit(tree.children[1])
-    
+
     def d_equal(self, tree): return self.visit(tree.children[0]) == self.visit(tree.children[1])
     def n_equal(self, tree): return self.visit(tree.children[0]) != self.visit(tree.children[1])
     def less_than(self, tree): return self.visit(tree.children[0]) < self.visit(tree.children[1])
     def greater_than(self, tree): return self.visit(tree.children[0]) > self.visit(tree.children[1])
     def lt_equal(self, tree): return self.visit(tree.children[0]) <= self.visit(tree.children[1])
     def gt_equal(self, tree): return self.visit(tree.children[0]) >= self.visit(tree.children[1])
-    
+
     def and_logic(self, tree): return bool(self.visit(tree.children[0])) and bool(self.visit(tree.children[1]))
     def or_logic(self, tree): return bool(self.visit(tree.children[0])) or bool(self.visit(tree.children[1]))
     def not_logic(self, tree): return not self.visit(tree.children[0])
 
+    def ternary_logic(self, tree):
+        condition = self.visit(tree.children[0])
+        if condition: return self.visit(tree.children[1])
+        else: return self.visit(tree.children[2])
+
     def array(self, tree):
-        elements = [self.visit(child) for child in tree.children]
+        elements = []
+        for child in tree.children:
+            val = self.visit(child)
+            if isinstance(val, RangeObject):
+                elements.extend(val.elements)
+            else:
+                elements.append(val)
         return ArrayObject(elements)
 
     def pair(self, tree):
@@ -211,6 +264,7 @@ class Environment(Interpreter):
         values = [self.visit(i) for i in tree.children]
         formatted = []
         for v in values:
+            if isinstance(v, RangeObject): formatted.append(" ".join(map(str, v.elements)))
             if v is True: formatted.append("true")
             elif v is False: formatted.append("false")
             elif v is None: formatted.append("null")
@@ -225,7 +279,8 @@ class Environment(Interpreter):
     def if_stmt(self, tree):
         condition = self.visit(tree.children[0])
         if condition: return self.visit(tree.children[1])
-        elif len(tree.children) > 2: return self.visit(tree.children[2])
+        elif len(tree.children) > 2 and tree.children[2] is not None:
+            return self.visit(tree.children[2])
         return None
 
     def block(self, tree):
@@ -245,47 +300,20 @@ class Environment(Interpreter):
     def break_stmt(self, tree): raise BreakSignal()
     def continue_stmt(self, tree): raise ContinueSignal()
 
-    def import_stmt(self, tree):
-        package = ".".join(map(str, tree.children[0].children))
-        if package in self.packages:
-            return
+    def execute_external(self, path):
+        if not hasattr(path, 'loaded_modules'): self.loaded_modules = set()
+        resolved = path.resolve()
+        if resolved in self.loaded_modules: return
 
-        lib_dir = self.source_dir / "lib"
-        if not lib_dir.exists():
-            lib_dir = Path("lib").resolve()
+        self.loaded_modules.add(resolved)
+        source = path.read_text(encoding="utf-8")
+        tree = parser.parse(source)
 
-        py_lib_file = lib_dir / f"{package.replace('.', '/')}.py"
-        if py_lib_file.is_file():
-            import importlib.util
-            import sys
+        sub_env = Environment(path.parent, [])
+        sub_env.env = self.env
 
-            spec = importlib.util.spec_from_file_location(f"lib.{package}", py_lib_file)
-            py_mod = importlib.util.module_from_spec(spec)
-            
-            sys.modules[f"lib.{package}"] = py_mod
-            spec.loader.exec_module(py_mod)
-            self.packages.add(package)
-
-            for attribute in dir(py_mod):
-                attr_value = getattr(py_mod, attribute)
-                if callable(attr_value) and getattr(attr_value, "__module__", None) == py_mod.__name__:
-                    self.env[attribute] = PythonObject(attribute, attr_value)
-            return
-
-        pkg_dir = lib_dir.joinpath(*package.split("."))
-        if not pkg_dir.is_dir():
-            pkg_dir = self.source_dir.joinpath(*package.split("."))
-            if not pkg_dir.is_dir():
-                raise ModuleNotFoundError(f"Package '{package}' not found!")
-
-        files = sorted(pkg_dir.glob("*.own"))
-        if not files: raise ImportError(f"Package '{package}' contains no source files!")
-        self.packages.add(package)
-
-        for f in files:
-            source = f.read_text(encoding='utf-8')
-            tree = parser.parse(source)
-            self.visit(tree)
+        sub_env.loaded_modules = self.loaded_modules
+        sub_env.visit(tree)
 
     def reg_func(self, tree):
         name = str(tree.children[0])
@@ -293,12 +321,22 @@ class Environment(Interpreter):
         body = tree.children[2]
 
         params = []
+        default = {}
+        is_rest = False
+
         if param and hasattr(param, "children"):
-            for i in param.children:
-                if i is not None: params.append(str(i))
+            for item in param.children:
+                if item is None: continue
+                if hasattr(item, "data") and item.data == "param_with_default":
+                    p_name = str(item.children[0])
+                    params.append(p_name)
+                    if len(p_name) > 1: default[p_name] = item.children[1]
+                elif str(item) == "...":
+                    is_rest = True
+                    params.append("...")
         elif param is not None: params.append(str(param))
 
-        func_obj = FunctionObject(name, params, body, self)
+        func_obj = FunctionObject(name, params, body, self, defaults=default, is_rest=is_rest)
         self.env[name] = func_obj
         return func_obj
 
@@ -321,27 +359,39 @@ class Environment(Interpreter):
         obj = self.search_func(name)
 
         exprs = tree.children[1:] if len(tree.children) > 1 else []
-        values = [self.visit(args) for args in exprs if args is not None]
-        has_rest = obj.param and obj.param[-1] == "..."
+        passed_values = [self.visit(args) for args in exprs if args is not None]
 
         local_env = Environment(self.source_dir, cli_args=[])
         local_env.env = dict(obj.closure.env)
         local_env.packages = self.packages
 
+        params = obj.param
+        has_rest = getattr(obj, "is_rest", False)
+        defaults = getattr(obj, "defaults", {})
+
         if has_rest:
-            fixed_params_count = len(obj.param) - 1
-            if len(values) < fixed_params_count:
-                raise TypeError(f"Function '{name}' requires at least {fixed_params_count} arguments!")
+            fixed_params = [p for p in params if p != "..."]
+            fixed_count = len(fixed_params)
 
-            fixed_values = values[:fixed_params_count]
-            rest_values = values[fixed_params_count:]
-
-            for p_name, val in zip(obj.param[:-1], fixed_values): local_env.env[p_name] = val
-            local_env.env["..."] = ArrayObject(rest_values)
+            for i, p_name in enumerate(fixed_params):
+                if i < len(passed_values): local_env.env[p_name] = passed_values[i]
+                elif p_name in defaults: local_env.env[p_name] = local_env.visit(defaults[p_name])
+                else: raise TypeError(f"Function '{name}' missing required argument '{p_name}'!")
+            
+            rest_vals = passed_values[fixed_count:]
+            local_env.env["..."] = ArrayObject(rest_vals)
         else:
-            if len(values) != len(obj.param):
-                raise TypeError(f"Function '{name}' expects {len(obj.param)} arguments, got {len(values)}!")
-            for p_name, val in zip(obj.param, values): local_env.env[p_name] = val
+            val_idx = 0
+
+            for p_name in params:
+                if val_idx < len(passed_values):
+                    local_env.env[p_name] = passed_values[val_idx]
+                    val_idx += 1
+                elif p_name in defaults: local_env.env[p_name] = local_env.visit(defaults[p_name])
+                else: raise TypeError(f"Function '{name}' missing argument for '{p_name}'!")
+            
+            if val_idx < len(passed_values):
+                raise TypeError(f"Function '{name}' expects {len(params)} arguments, got {len(passed_values)}!")
 
         try: return local_env.visit(obj.block)
         except ReturnSignal as ret: return ret.value

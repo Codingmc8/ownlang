@@ -130,10 +130,10 @@ func hi_ret_param(name) {
 ### import
 ```
 // import with package system
-import path.to.your.library
+import "path/to/your/library"
 
 // import without package system
-import mylibrary
+import "mylibrary.own"
 ```
 
 ### Comment & Multi-Comment
@@ -160,5 +160,4 @@ import mylibrary
 * not support `float` data type
 
 ## Next Update
-* [ ] String interpolation (`${variable}`)
-* [ ] Expanded built-in standard library
+* [] better import system

@@ -8,33 +8,38 @@ unit: args
     | return_stmt
     | break_stmt
     | continue_stmt
-    | import_stmt
     | expr_stmt
 
-args: "let" CNAME "=" expr          -> register
-    | "let" CNAME                   -> empty_value
-    | "let" CNAME "=" array         -> let_array
-    | "let" CNAME "=" dict          -> let_dict
-    | CNAME "=" value               -> update
-    | CNAME "+=" value              -> add_equal
-    | CNAME "-=" value              -> min_equal
-    | CNAME "*=" value              -> mul_equal
-    | CNAME "/=" value              -> div_equal
-    | CNAME "^=" value              -> domain_equal
-    | obj_acc                       -> obj_assign
+args: "let" CNAME "=" (expr | range_expr)   -> register
+    | "let" CNAME                           -> empty_value
+    | "let" CNAME "=" array                 -> let_array
+    | "let" CNAME "=" dict                  -> let_dict
+    | CNAME "=" value                       -> update
+    | CNAME "+=" value                      -> add_equal
+    | CNAME "-=" value                      -> min_equal
+    | CNAME "*=" value                      -> mul_equal
+    | CNAME "/=" value                      -> div_equal
+    | CNAME "^=" value                      -> domain_equal
+    | obj_acc                               -> obj_assign
 
 ?value: expr
       | array
       | dict
 
-array: "[" [value ("," value)*] "]"
+array: "[" [array_element ("," array_element)*] "]"
+?array_element: value | range_expr
+
 dict: "{" [pair ("," pair)*] "}"
 pair: CNAME ":" value
 obj_acc: CNAME "." CNAME "=" expr -> obj_assignment
+
 AT: "@"
 NULL: "null"
 
-?expr: logic_or
+?expr: ternary
+
+?ternary: logic_or
+        | logic_or "?" expr ":" ternary -> ternary_logic
 
 ?logic_or: logic_and
          | logic_or "||" logic_and -> or_logic
@@ -76,26 +81,33 @@ NULL: "null"
      | AT NUMBER -> arg_base_index
      | NULL -> null_expr
 
-echo_stmt: "echo" expr ("," expr)*
-if_stmt: "if" expr block ("else" block)? -> if_stmt
-for_stmt: "for" expr block
+echo_stmt: "echo" echo_item ("," echo_item)*
+?echo_item: expr | range_expr
+
+if_stmt: "if" "(" expr ")" block ("else" block)? -> if_stmt
+for_stmt: "for" "(" (expr | range_expr) ")" block
+
 func_stmt: "func" CNAME "(" param ")" block -> reg_func
-return_stmt: "return" expr
+return_stmt: "return" (expr | range_expr)
+
 break_stmt: "break"
 continue_stmt: "continue"
-import_stmt: "import" import_path
 expr_stmt: expr
 
 block: "{" unit* "}"
-param: [CNAME ("," CNAME)* ("," "...")?] -> param_def
+param: [param_item ("," param_item)* ("," "...")?] -> param_def
      | "..." -> rest_only
-import_path: CNAME ("." CNAME)*
+
+param_item: CNAME ("=" expr)? -> param_with_default
+range_expr: atom DOTDOT atom
 
 BOOLEAN.2: "true" | "false"
 STRING: /"[^"]*"/
+DOTDOT: ".."
 
 %import common.NUMBER
 %import common.CNAME
+%import common.ESCAPED_STRING
 %import common.WS
 
 COMMENT: /\/\/[^\n]*/

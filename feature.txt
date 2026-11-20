@@ -1,0 +1,56 @@
+* echo
+    - support interpolared string
+    - support expression
+    - support array
+    - support object
+    - support normal string
+    - support number
+    - support boolean
+    - support variable
+    - support range expression
+
+* let
+    - support function data
+    - support interpolared string
+    - support number
+    - support boolean
+    - support normal string
+    - support expression
+    - support array
+    - support object
+    - support variable
+    - support range expression in array
+
+* for
+    - support expression
+    - support range expression
+    - support boolean
+    - support variable
+
+* if
+    - support range expression
+    - support expression
+    - support boolean
+    - support variable
+
+* else
+    - support range expression
+    - support expression
+    - support boolean
+    - support variable
+
+* break and continue : None
+
+* func
+    - support parameters
+    - support param expression
+    - support default value
+
+* return
+    - support range expression
+    - support expression
+    - support number
+    - support boolean
+    - support string
+    - support variable
+    - support interpolared string
