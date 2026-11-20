@@ -90,6 +90,7 @@ class Environment(Interpreter):
 
         terminal = cli_args if cli_args is not None else (sys.argv[2:] if len(sys.argv) > 2 else [])
         self.env["@"] = ArrayObject(terminal)
+        self.typedefs = {}
 
     def start(self, tree):
         result = None
@@ -297,6 +298,33 @@ class Environment(Interpreter):
             except BreakSignal: break
         return result
 
+    def typedef_stmt(self, tree):
+        name = str(tree.children[0])
+        value = self.visit(tree.children[1])
+        self.typedefs[name] = value
+        return value
+
+    def typed_register(self, tree):
+        type_name = str(tree.children[0])
+        var = str(tree.children[1])
+        val = tree.children[2]
+
+        if type_name not in self.typedefs: raise TypeError(f"Unknown type '{type_name}'")
+        self.env[var] = val
+        return val
+
+    def typed_default_register(self, tree):
+        type_name = str(tree.children[0])
+        var = str(tree.children[1])
+
+        if type_name not in self.env: raise NameError(f"Undefined type '{type_name}'")
+        default = self.env[type_name]
+        if default is None:
+            raise TypeError(f"Cannot initialize variable '{var}': default value from '{type_name}' is null/empty!")
+
+        self.env[var] = default
+        return default
+
     def break_stmt(self, tree): raise BreakSignal()
     def continue_stmt(self, tree): raise ContinueSignal()
 
@@ -398,7 +426,7 @@ class Environment(Interpreter):
 
 parser = Lark(
     GRAMMAR.read_text(encoding="utf-8"),
-    parser="lalr"
+    parser='earley'
 )
 
 def version():

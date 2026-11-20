@@ -49,6 +49,14 @@ own myfile.own alex
 - simple package system
 ```
 
+## Update 1.0.2
+```txt
+- added typedef syntax
+- added ternary operators
+- update for, func, if system
+- removed import system
+```
+
 ## Example
 ### echo
 ```
@@ -68,35 +76,40 @@ let string = "Hello, World"
 let boolean = true
 let array = [number, string, boolean]
 let object = {all: array}
+let range = [1..5]
 ```
 
 ### for & if & else & break & continue
+**print out number 0-3**
 ```
-// print out number 0-3
 let i = 0
-for i < 3 {
+for (i < 3){
     echo i
     i += 1
 }
+```
 
-// loop 0-n
+**loop 0-n**
+```
 let running = true
 let i = 0
 
-for running {
+for (running) {
     echo i
     i += 1
 }
+```
 
-// repeat until number 10
+**repeat until number 10**
+```
 let running = true
 let i = 0
 
-for running {
+for (running) {
     echo i
     i += 1
 
-    if i == 10 {
+    if (i == 10) {
         break
     } else {
         continue
@@ -104,36 +117,85 @@ for running {
 }
 ```
 
-### func & return
+**one line for if else**
 ```
-// no parameter
+let running = true
+let i = 0
+
+for(running) {
+    let max = (i == 10) ? 10 : i
+    echo max
+
+    i += 1
+    if(i >= 10) running = false
+}
+```
+
+### func & return
+**no param**
+```
 func hi() {
     echo "Hi"
 }
+```
 
-// with parameter
+**with parameter**
+```
 func hi_param(name) {
     echo "Hi", name
 }
+```
 
-// with argument input
+**with argument input**
+```
 func hi_input() {
     echo "Hi", @1
 }
+```
 
-// with return and parameter
+**with return and parameter**
+```
 func hi_ret_param(name) {
     return "Hi", name
 }
 ```
 
-### import
+**with default parameter**
 ```
-// import with package system
-import "path/to/your/library"
+func hi_default(name="Alex") {
+    return name
+}
+```
 
-// import without package system
-import "mylibrary.own"
+**with expression param**
+```
+func hi_expr(value = 1 ? 1 : 0) {
+    return value
+}
+```
+
+**with one line code, for example... i write hi_default()**
+```
+func hi_default(name="Alex") return name
+```
+
+### typedef
+```
+typedef Number : 1
+typedef String : "Hello, World"
+typedef Boolean : true
+
+typedef Home : getHome()
+typedef Range : 1..5
+```
+
+**for interpolared string**
+```
+// information about home workspace
+typedef Home : getHome()
+
+Home home
+typedef I_String : "Welcome {home}"
 ```
 
 ### Comment & Multi-Comment
@@ -148,9 +210,11 @@ import "mylibrary.own"
 * **Assignment**: `=`, `+=`, `-=`, `*=`, `/=`, `^=`
 * **Comparison**: `==`, `!=`, `<`, `>`, `<=`, `>=`
 * **Logical**: `&&` (AND), `||` (OR), `!` (NOT)
+* **Ternary**: `?`, `:`
 
 ## Support
 - `int`, `string`, `boolean`, `null` data type
+- support custom datatype
 - `.own` extension
 - argument input using `@` symbols
 - `array` and `object` access
@@ -158,6 +222,7 @@ import "mylibrary.own"
 ## Notes
 * this language use `0-based-indexing`
 * not support `float` data type
+* support one line code for `if` `else` `func` and `for`
 
 ## Next Update
 * [] better import system

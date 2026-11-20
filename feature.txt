@@ -8,6 +8,7 @@
     - support boolean
     - support variable
     - support range expression
+    - support ternary operators
 
 * let
     - support function data
@@ -20,6 +21,7 @@
     - support object
     - support variable
     - support range expression in array
+    - support ternary operators
 
 * for
     - support expression
@@ -45,6 +47,8 @@
     - support parameters
     - support param expression
     - support default value
+    - support ternary operators
+    - support default value
 
 * return
     - support range expression
@@ -54,3 +58,15 @@
     - support string
     - support variable
     - support interpolared string
+    - support ternary operators
+
+* typedef
+    - support number
+    - support string
+    - support boolean
+    - support expression
+    - support function
+    - support range expression
+    - support interpolared string
+    - support variable
+    - support ternary operators

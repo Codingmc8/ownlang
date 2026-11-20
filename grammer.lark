@@ -8,6 +8,7 @@ unit: args
     | return_stmt
     | break_stmt
     | continue_stmt
+    | typedef_stmt
     | expr_stmt
 
 args: "let" CNAME "=" (expr | range_expr)   -> register
@@ -21,6 +22,8 @@ args: "let" CNAME "=" (expr | range_expr)   -> register
     | CNAME "/=" value                      -> div_equal
     | CNAME "^=" value                      -> domain_equal
     | obj_acc                               -> obj_assign
+    | CNAME CNAME "=" (expr | range_expr | array | dict) -> typed_register
+    | CNAME CNAME                           -> typed_default_register
 
 ?value: expr
       | array
@@ -84,15 +87,19 @@ NULL: "null"
 echo_stmt: "echo" echo_item ("," echo_item)*
 ?echo_item: expr | range_expr
 
-if_stmt: "if" "(" expr ")" block ("else" block)? -> if_stmt
-for_stmt: "for" "(" (expr | range_expr) ")" block
+if_stmt: "if" "(" expr ")" body ("else" body)? -> if_stmt
+for_stmt: "for" "(" (expr | range_expr) ")" body
 
-func_stmt: "func" CNAME "(" param ")" block -> reg_func
+func_stmt: "func" CNAME "(" param ")" body -> reg_func
 return_stmt: "return" (expr | range_expr)
 
 break_stmt: "break"
 continue_stmt: "continue"
+
+typedef_stmt: "typedef" CNAME (":" (expr | range_expr | array | dict))? -> typedef_stmt
 expr_stmt: expr
+
+?body: block | unit
 
 block: "{" unit* "}"
 param: [param_item ("," param_item)* ("," "...")?] -> param_def
