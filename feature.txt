@@ -89,3 +89,6 @@
     - support function
     - support alias or typedef
     - support struct itself
+
+* import
+    - support only package based system

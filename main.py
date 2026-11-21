@@ -222,6 +222,16 @@ class Environment(Interpreter):
     def or_logic(self, tree): return bool(self.visit(tree.children[0])) or bool(self.visit(tree.children[1]))
     def not_logic(self, tree): return not self.visit(tree.children[0])
 
+    def inc(self, tree):
+        name = str(tree.children[0])
+        tree.children = [name, 1]
+        return self.add_equal(tree)
+
+    def dec(self, tree):
+        name = str(tree.children[0])
+        tree.children = [name, 1]
+        return self.min_equal(tree)
+
     def ternary_logic(self, tree):
         condition = self.visit(tree.children[0])
         if condition: return self.visit(tree.children[1])
@@ -505,6 +515,41 @@ class Environment(Interpreter):
         self.const.add(name)
         self.env[name] = value
         return value
+
+    def import_stmt(self, tree):
+        parts = [str(child) for child in tree.children]
+        current_path = self.source_dir
+
+        for i, part in enumerate(parts):
+            folder = current_path / part
+            file = current_path / f"{part}.own"
+
+            if folder.is_dir(): current_path = folder
+            elif file.is_file():
+                target = file
+                if i < len(parts) - 1: raise ImportError(f"Cannot revolved path: '{part}' is a file, not a directory!")
+                return self.reload(target, parts[-1])
+            else:
+                direct = current_path / part
+                if direct.is_file(): return self.reload(direct, part)
+                raise ImportError(f"Package or module '{'.'.join(parts[:i+1])}' not found!")
+
+    def reload(self, path, module_alias):
+        resolved_path = path.resolve()
+        if not hasattr(self, 'module_storage'): self.module_storage = {}
+
+        if resolved_path in self.module_storage: module_env = self.module_storage[resolved_path]
+        else:
+            source = resolved_path.read_text(encoding='utf-8')
+            tree = parser.parse(source)
+
+            module_env = Environment(resolved_path.parent, [])
+            module_env.visit(tree)
+            self.module_storage[resolved_path] = module_env
+
+        module_container = DictObject(module_env.env)
+        self.env[module_alias] = module_container
+        return module_container
 
 parser = Lark(
     GRAMMAR.read_text(encoding="utf-8"),

@@ -67,6 +67,12 @@ own myfile.own alex
 - added struct syntax
 ```
 
+## Update 1.0.5
+```txt
+- added import syntax
+- added ++ and --
+```
+
 ## Example
 ### echo
 ```
@@ -87,6 +93,12 @@ let boolean = true
 let array = [number, string, boolean]
 let object = {all: array}
 let range = [1..5]
+
+// with ++
+let eleven = number++
+
+// with --
+let ten = eleven--
 ```
 
 ### const

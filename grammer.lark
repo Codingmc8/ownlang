@@ -11,6 +11,7 @@ unit: args
     | continue_stmt
     | typedef_stmt
     | struct_stmt
+    | import_stmt
     | expr_stmt
 
 args: "let" CNAME "=" (expr | range_expr)   -> register
@@ -72,10 +73,14 @@ NULL: "null"
       | unary "^" power -> domain
 
 ?unary: "!" unary -> not_logic
+      | "++" CNAME -> inc
+      | "--" CNAME -> dec
       | atom
 
 ?atom: NUMBER -> number
      | CNAME "(" [expr ("," expr)*] ")" -> func_call
+     | CNAME "++" -> inc
+     | CNAME "--" -> dec
      | CNAME -> var
      | CNAME "[" expr "]" -> arr_index
      | CNAME "." CNAME -> obj_access
@@ -113,6 +118,8 @@ struct_stmt: "struct" CNAME "{" val* "}" -> struct_stmt
     | func_stmt
     | typedef_stmt
     | struct_stmt
+
+import_stmt: "import" CNAME ("." CNAME)* -> import_stmt
 
 block: "{" unit* "}"
 param: [param_item ("," param_item)* ("," "...")?] -> param_def

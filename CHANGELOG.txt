@@ -22,3 +22,7 @@ Own 1.0.3 : Constanta Value
 
 Own 1.0.4 : Data Structure
     - added struct syntax
+
+Own 1.0.5 : Modularize
+    - added import syntax
+    - added ++ and --
