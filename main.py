@@ -86,7 +86,7 @@ class Environment(Interpreter):
         super().__init__()
         self.env = {}
         self.source_dir = Path(source_dir).resolve()
-        self.packages = set()
+        self.const = set()
 
         terminal = cli_args if cli_args is not None else (sys.argv[2:] if len(sys.argv) > 2 else [])
         self.env["@"] = ArrayObject(terminal)
@@ -155,12 +155,16 @@ class Environment(Interpreter):
 
     def update(self, tree):
         name, value = tree.children
+        if name in self.const: raise TypeError(f"Variable '{name}' is a constanta!")
+
         value = self.visit(value)
         self.env[str(name)] = value
         return value
 
     def _compound(self, tree, operation):
         name, value = tree.children
+        if name in self.const: raise TypeError(f"Variable '{name}' is constanta!")
+
         value = self.visit(value)
         self.env[str(name)] = operation(self.search(str(name)), value)
         return self.env[str(name)]
@@ -423,6 +427,31 @@ class Environment(Interpreter):
 
         try: return local_env.visit(obj.block)
         except ReturnSignal as ret: return ret.value
+
+    def const_stmt(self, tree):
+        name = str(tree.children[0])
+        value = tree.children[1]
+
+        if name in self.env: raise NameError(f"Variable '{name}' have been declarated before!")
+        self.const.add(name)
+        
+        self.env[name] = value
+        return value
+
+    def const_alias_stmt(self, tree):
+        alias = str(tree.children[0])
+        name = str(tree.children[1])
+
+        if alias not in self.typedefs and alias not in self.env:
+            raise TypeError(f"Unknown type/alias '{alias}'")
+        if name in self.env: raise NameError(f"Variable '{name}' have been declarated before!")
+
+        if len(tree.children) > 2 and tree.children[2] is not None: value = self.visit(tree.children[2])
+        else: value = self.env.get(alias, None)
+
+        self.const.add(name)
+        self.env[name] = value
+        return value
 
 parser = Lark(
     GRAMMAR.read_text(encoding="utf-8"),

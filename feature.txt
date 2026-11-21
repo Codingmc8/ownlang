@@ -70,3 +70,16 @@
     - support interpolared string
     - support variable
     - support ternary operators
+
+* const
+    - support function data
+    - support interpolared string
+    - support number
+    - support boolean
+    - support normal string
+    - support expression
+    - support array
+    - support object
+    - support variable
+    - support range expression in array
+    - support ternary operators

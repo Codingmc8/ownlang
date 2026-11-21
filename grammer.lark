@@ -1,6 +1,7 @@
 start: unit*
 
 unit: args
+    | const_args
     | echo_stmt
     | if_stmt
     | for_stmt
@@ -98,6 +99,9 @@ continue_stmt: "continue"
 
 typedef_stmt: "typedef" CNAME (":" (expr | range_expr | array | dict))? -> typedef_stmt
 expr_stmt: expr
+
+const_args: "const" CNAME "=" (expr | range_expr | array | dict)            -> const_stmt
+          | "const" CNAME CNAME ("=" (expr | range_expr | array | dict))    -> const_alias_stmt
 
 ?body: block | unit
 

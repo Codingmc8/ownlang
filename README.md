@@ -57,6 +57,11 @@ own myfile.own alex
 - removed import system
 ```
 
+## Update 1.0.3
+```txt
+- added const syntax
+```
+
 ## Example
 ### echo
 ```
@@ -77,6 +82,35 @@ let boolean = true
 let array = [number, string, boolean]
 let object = {all: array}
 let range = [1..5]
+```
+
+### const
+**basic const**
+```
+// with value
+const say = "Hello, World"
+```
+
+**with default value**
+```
+typedef RangeMe : 10 ^ 2
+const RangeMe me
+```
+
+**with change value**
+```
+typedef RangeMe : 10 ^ 2
+const RangeMe me = 10 ^ 3
+```
+
+**error const**
+```
+// its error! null value
+const my
+
+// its error! update value is not allowed
+const me = 20
+me = 10
 ```
 
 ### for & if & else & break & continue
