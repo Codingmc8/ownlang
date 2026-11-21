@@ -62,6 +62,11 @@ own myfile.own alex
 - added const syntax
 ```
 
+## Update 1.0.4
+```txt
+- added struct syntax
+```
+
 ## Example
 ### echo
 ```
@@ -232,6 +237,26 @@ Home home
 typedef I_String : "Welcome {home}"
 ```
 
+### struct
+**struct declaration and struct access**
+```
+// declaration
+struct Point {
+    let point = 0
+
+    func getScore(score) {
+        let p = score ? score += 1 : score -= 1
+        echo p
+    }
+}
+
+// access
+Point p
+
+p.point = 10
+p.getScore(p.point)
+```
+
 ### Comment & Multi-Comment
 ```
 // this is comment
@@ -257,6 +282,7 @@ typedef I_String : "Welcome {home}"
 * this language use `0-based-indexing`
 * not support `float` data type
 * support one line code for `if` `else` `func` and `for`
+* `struct` only support `struct`, `func`, `typedef`, `let` and `const`
 
 ## Next Update
 * [] better import system

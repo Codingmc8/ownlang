@@ -19,3 +19,6 @@ Own 1.0.2 : Variable manipulation
 
 Own 1.0.3 : Constanta Value
     - added const syntax
+
+Own 1.0.4 : Data Structure
+    - added struct syntax

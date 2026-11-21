@@ -83,3 +83,9 @@
     - support variable
     - support range expression in array
     - support ternary operators
+
+* struct
+    - support variable (let/const)
+    - support function
+    - support alias or typedef
+    - support struct itself

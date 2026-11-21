@@ -10,6 +10,7 @@ unit: args
     | break_stmt
     | continue_stmt
     | typedef_stmt
+    | struct_stmt
     | expr_stmt
 
 args: "let" CNAME "=" (expr | range_expr)   -> register
@@ -104,6 +105,14 @@ const_args: "const" CNAME "=" (expr | range_expr | array | dict)            -> c
           | "const" CNAME CNAME ("=" (expr | range_expr | array | dict))    -> const_alias_stmt
 
 ?body: block | unit
+
+struct_stmt: "struct" CNAME "{" val* "}" -> struct_stmt
+
+?val: args
+    | const_args
+    | func_stmt
+    | typedef_stmt
+    | struct_stmt
 
 block: "{" unit* "}"
 param: [param_item ("," param_item)* ("," "...")?] -> param_def

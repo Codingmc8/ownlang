@@ -81,6 +81,36 @@ class RangeObject:
 
     def __repr__(self): return f"[{', '.join(map(str, self.elements))}]"
 
+class StructObject:
+    def __init__(self, name, body, instance):
+        self.name = name
+        self.body = body
+        self.instance = instance
+
+    def __repr__(self): return f"<struct {self.name}>"
+
+class StructInstance:
+    def __init__(self, struct_def):
+        self.struct_def = struct_def
+        self.fields = {}
+
+        local_env = Environment(struct_def.instance.source_dir, [])
+        local_env.env = dict(struct_def.instance.env)
+
+        for child in struct_def.body: local_env.visit(child)
+        self.fields = dict(local_env.env)
+
+    def get_key(self, key):
+        if key not in self.fields: raise KeyError(f"Struct instance not have attribute '{key}'")
+        return self.fields[key]
+
+    def set_key(self, key, value):
+        if key not in self.fields: raise KeyError(f"Struct instance not have attribute '{key}'")
+        self.fields[key] = value
+        return value
+
+    def __repr__(self): return f"<struct-instance {self.struct_def.name}>"
+
 class Environment(Interpreter):
     def __init__(self, source_dir, cli_args=None):
         super().__init__()
@@ -243,17 +273,21 @@ class Environment(Interpreter):
         name = str(tree.children[0])
         prop_name = str(tree.children[1])
         obj = self.search(name)
-        if not isinstance(obj, DictObject): raise TypeError(f"Variable '{name}' isn't regular object!")
-        return obj.get(prop_name)
+
+        if isinstance(obj, StructInstance): return obj.get_key(prop_name)
+        elif isinstance(obj, DictObject): return obj.get(prop_name)
+        raise TypeError(f"Variable '{name}' isn't a struct or object!")
 
     def obj_assignment(self, tree):
         name = str(tree.children[0])
         prop_name = str(tree.children[1])
         expr = tree.children[2]
         obj = self.search(name)
-        if not isinstance(obj, DictObject): raise TypeError(f"Variable '{name}' isn't regular object!")
         val = self.visit(expr)
-        return obj.set(prop_name, val)
+
+        if isinstance(obj, StructInstance): return obj.set_key(prop_name, val)
+        elif isinstance(obj, DictObject): return obj.set(prop_name, val)
+        raise TypeError(f"Variable '{name}' isn't a struct or object!")
 
     def arg_base(self, tree): return self.search("@")
     def arg_base_index(self, tree):
@@ -311,7 +345,17 @@ class Environment(Interpreter):
     def typed_register(self, tree):
         type_name = str(tree.children[0])
         var = str(tree.children[1])
-        val = tree.children[2]
+
+        if type_name in self.typedefs and isinstance(self.typedefs[var], StructObject):
+            struct_def = self.typedefs[type_name]
+            instance = StructInstance(struct_def)
+
+            self.env[var] = instance
+            return instance
+
+        if len(tree.children) > 2 and tree.children[2] is not None:
+            val = self.visit(tree.children[2])
+        else: val = None
 
         if type_name not in self.typedefs: raise TypeError(f"Unknown type '{type_name}'")
         self.env[var] = val
@@ -328,6 +372,15 @@ class Environment(Interpreter):
 
         self.env[var] = default
         return default
+
+    def struct_stmt(self, tree):
+        name = str(tree.children[0])
+        body = tree.children[1:]
+        struct_obj = StructObject(name, body, self)
+
+        self.typedefs[name] = struct_obj
+        self.env[name] = struct_obj
+        return struct_obj
 
     def break_stmt(self, tree): raise BreakSignal()
     def continue_stmt(self, tree): raise ContinueSignal()
