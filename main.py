@@ -3,6 +3,7 @@ from lark import Lark
 from lark.visitors import Interpreter
 import sys, re, importlib.util
 import os, shutil, uuid
+import runtime
 
 GRAMMAR = Path(__file__).parent / "grammer.lark"
 
@@ -121,6 +122,13 @@ class Environment(Interpreter):
         terminal = cli_args if cli_args is not None else (sys.argv[2:] if len(sys.argv) > 2 else [])
         self.env["@"] = ArrayObject(terminal)
         self.typedefs = {}
+
+        for attr_name in dir(runtime):
+            if attr_name.startswith("__") and attr_name.endswith("__"):
+                func = getattr(runtime, attr_name)
+                if callable(func):
+                    clean_name = attr_name[2:-2]
+                    self.env[clean_name] = PythonObject(clean_name, func)
 
     def start(self, tree):
         result = None

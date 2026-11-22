@@ -5,11 +5,13 @@ made by `Codingmc8` using `Python3` + `Lark`
 
 ### Requirement
 * `lark`
+* `py-cpuinfo`
+* `psutil`
 * `Python3.8+`
 
 ### installing dependencies
 ```bash
-pip install lark
+pip install lark py-cpuinfo psutil
 ```
 or
 ```bash
@@ -71,6 +73,13 @@ own myfile.own alex
 ```txt
 - added import syntax
 - added ++ and --
+```
+
+## Update 1.0.6
+```txt
+- added sysinfo library
+- added uuid library
+- added basic os management library
 ```
 
 ## Example
@@ -283,6 +292,23 @@ p.getScore(p.point)
 * **Logical**: `&&` (AND), `||` (OR), `!` (NOT)
 * **Ternary**: `?`, `:`
 
+## Standard Library
+| OS management                   | UUID                 | SysInfo               |
+| ------------------------------- | -------------------- | --------------------- |
+| `move(old, new)`                | `uuid()`             | `osinfo()`            |
+| `rename(old, new)`              | `random(length)`     | `cpuinfo()`           |
+| `copy(old, new)`                | `seed(length)`       | `gpuinfo()`           |
+| `system(command, ...)`          | `choice(start, end)` | `raminfo()`           |
+| `mkdir(name_or_path, ...)`      |                      | `storageinfo()`       |
+| `rmdir(name_or_path, ...)`      |                      | `battery()`           |
+| `touch(name_or_path, ...)`      |                      | `computer_and_bios()` |
+| `rmdir(name_or_path, ...)`      |                      |                       |
+| `write(name_or_path, content)`  |                      |                       |
+| `append(name_or_path, content)` |                      |                       |
+| `listdir(path, ...)`            |                      |                       |
+| `chdir(path)`                   |                      |                       |
+| `exists(path)`                  |                      |                       |
+
 ## Support
 - `int`, `string`, `boolean`, `null` data type
 - support custom datatype
@@ -295,6 +321,3 @@ p.getScore(p.point)
 * not support `float` data type
 * support one line code for `if` `else` `func` and `for`
 * `struct` only support `struct`, `func`, `typedef`, `let` and `const`
-
-## Next Update
-* [] better import system

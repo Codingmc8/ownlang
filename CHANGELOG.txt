@@ -26,3 +26,8 @@ Own 1.0.4 : Data Structure
 Own 1.0.5 : Modularize
     - added import syntax
     - added ++ and --
+
+Own 1.0.6 : Standard Library
+    - added sysinfo library
+    - added uuid library
+    - added basic os management library

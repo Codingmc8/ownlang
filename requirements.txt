@@ -1,1 +1,3 @@
 lark
+psutil
+py-cpuinfo
